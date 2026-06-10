@@ -16,11 +16,11 @@ heuristic = {
     'E': 10, 'F': 11, 'G': 3, 'H': 0, 'I': 0, 'J': 1
 }
 
-cost           = {n: heuristic[n] for n in heuristic}
-solved         = {n: False for n in graph}
+cost = {n: heuristic[n] for n in heuristic}
+solved = {n: False for n in graph}
 best_connector = {}
 solution_graph = {}
-parents        = {n: [] for n in graph}
+parents = {n: [] for n in graph}
 
 
 def is_and_group(connector):
@@ -58,11 +58,13 @@ def evaluate_node(node):
 
     for connector in graph[node]['children']:
         c = connector_cost_estimate(connector)
+
         if is_and_group(connector):
             conn_solved = all(solved[child] for child, _ in connector)
         else:
             child, _ = connector
             conn_solved = solved[child]
+
         if c < best_cost:
             best_cost = c
             best_conn = connector
@@ -72,7 +74,6 @@ def evaluate_node(node):
 
 
 def add_children_to_frontier(conn, frontier):
-    """Add unsolved children of a connector to the frontier."""
     if is_and_group(conn):
         for child, _ in conn:
             if not solved.get(child, False) and child not in frontier:
@@ -84,28 +85,28 @@ def add_children_to_frontier(conn, frontier):
 
 
 def back_propagate(node, frontier):
-    queue   = list(parents[node])
+    queue = list(parents[node])
     visited = set()
 
     while queue:
         current = queue.pop(0)
+
         if current in visited:
             continue
+
         visited.add(current)
 
-        old_cost  = cost[current]
+        old_cost = cost[current]
         old_solved = solved[current]
-        old_conn  = best_connector.get(current)
+        old_conn = best_connector.get(current)
 
         new_cost, new_conn, new_solved = evaluate_node(current)
 
         if new_cost != old_cost or new_solved != old_solved:
-            cost[current]           = new_cost
+            cost[current] = new_cost
             best_connector[current] = new_conn
-            solved[current]         = new_solved
-           
+            solved[current] = new_solved
 
-            # If best connector changed, queue new children for exploration
             if new_conn != old_conn and new_conn is not None:
                 add_children_to_frontier(new_conn, frontier)
 
@@ -117,9 +118,10 @@ def back_propagate(node, frontier):
 def ao_star(start):
     for node in graph:
         solved[node] = not bool(graph[node]['children'])
-        cost[node]   = heuristic[node]
+        cost[node] = heuristic[node]
 
     build_parent_map()
+
     frontier = [start]
 
     while frontier:
@@ -128,11 +130,11 @@ def ao_star(start):
         if solved.get(node, False):
             continue
 
-       
         new_cost, best_conn, is_solved = evaluate_node(node)
-        cost[node]           = new_cost
+
+        cost[node] = new_cost
         best_connector[node] = best_conn
-        solved[node]         = is_solved
+        solved[node] = is_solved
 
         if best_conn is None:
             continue
@@ -146,10 +148,13 @@ def ao_star(start):
 def build_solution(node):
     if node not in best_connector or best_connector[node] is None:
         return
+
     conn = best_connector[node]
+
     if is_and_group(conn):
         children = [c for c, _ in conn]
         solution_graph[node] = {'type': 'AND', 'children': children}
+
         for child in children:
             build_solution(child)
     else:
@@ -158,13 +163,14 @@ def build_solution(node):
         build_solution(child)
 
 
-# Run
 result = ao_star('A')
 build_solution('A')
 
 print("\n")
 print("Minimum cost:", result)
+
 print("\nSolution Graph:")
+
 for n in sorted(solution_graph.keys()):
     info = solution_graph[n]
     print(f"  {n} ({info['type']}) → {info['children']}")
