@@ -1,0 +1,117 @@
+class Graph:
+    # example of adjacency list 
+    # adjacency_list = {
+    # 'A': [('B', 1), ('C', 3), ('D', 7)],
+    # 'B': [('D', 5)],
+    # 'C': [('D', 12)]
+    # }
+
+    def __init__(self, adjacency_list):
+        self.adjacency_list = adjacency_list
+
+    def get_neighbors(self, v):
+        return self.adjacency_list[v]
+
+    # heuristic function with equal values for all nodes
+    def h(self, n):
+        H = {
+            'a': 14,
+            'b': 14,
+            'c': 11,
+            'd': 6,
+            'e': 4,
+            'f': 11,
+            'z': 0
+        }
+
+        return H[n]
+
+    def a_star_algorithm(self, start_node, goal_node):
+        # frontier_set is a set of nodes which have been generated, but who's neighbors
+        # haven't all been generated, starts off with the start node
+        # expanded_set is a set of nodes which have been visited
+        # and who's neighbors have been inspected
+        frontier_set = set([start_node])
+        expanded_set = set([])
+
+        # g contains current distances from start_node to all other nodes
+        # the default value (if it's not found in the map) is +infinity
+        g = {}
+
+        g[start_node] = 0
+
+        # parents contains an adjacency map of all nodes
+        parents = {}
+        parents[start_node] = start_node
+
+        while len(frontier_set) > 0:
+            n = None
+
+            # find a node with the lowest value of f() - evaluation function
+            for v in frontier_set:
+                if n == None or g[v] + self.h(v) < g[n] + self.h(n):
+                    n = v;
+
+            if n == None:
+                print('Path does not exist!')
+                return None
+
+            # if the current node is the goal_node
+            # then we begin reconstructin the path from it to the start_node
+            if n == goal_node:
+                reconst_path = []
+
+                while parents[n] != n:
+                    reconst_path.append(n)
+                    n = parents[n]
+
+                reconst_path.append(start_node)
+
+                reconst_path.reverse()
+
+                print('Path found: {}'.format(reconst_path))
+                return reconst_path
+
+            # for all neighbors of the current node do
+            for (m, weight) in self.get_neighbors(n):
+                # if the current node isn't in both frontier_set and expanded_set
+                # add it to frontier_set and note n as it's parent
+                if m not in frontier_set and m not in expanded_set:
+                    frontier_set.add(m)
+                    parents[m] = n
+                    g[m] = g[n] + weight
+
+                # otherwise, check if it's quicker to first visit n, then m
+                # and if it is, update parent data and g data
+                # and if the node was in the expanded_set, move it to frontier_set
+                else:
+                    if g[m] > g[n] + weight:
+                        g[m] = g[n] + weight
+                        parents[m] = n
+
+                        if m in expanded_set:
+                            expanded_set.remove(m)
+                            frontier_set.add(m)
+
+            # remove n from the frontier_set, and add it to expanded_set
+            # because all of his neighbors were inspected
+            frontier_set.remove(n)
+            expanded_set.add(n)
+
+        print('Path does not exist!')
+        return None
+
+
+if __name__ == "__main__":
+    adjacency_list = {
+    'a': [('b', 4), ('c', 3)],
+    'b': [('a', 4), ('f', 5), ('e', 12)],
+    'c': [('a', 3), ('d', 7), ('e', 10)],
+    'd': [('c',7), ('e', 2)],
+    'e': [('b', 12), ('c', 10), ('d', 2), ('z', 5)],
+    'f': [('b', 5), ('z', 16)],
+    'z': [('f', 16), ('e', 5)]
+    }
+    graph1 = Graph(adjacency_list)
+    graph1.a_star_algorithm('a', 'z')
+    input()
